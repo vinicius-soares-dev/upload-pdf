@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const multer = require('multer');
 const cors = require('cors');
 const aws = require('aws-sdk');
@@ -15,7 +14,7 @@ app.use(express.json());
 const s3 = new aws.S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: 'us-east-1' // Altere para sua região
+  region: 'sa-east-1' // Altere para sua região
 });
 
 // Configuração do Multer para S3
