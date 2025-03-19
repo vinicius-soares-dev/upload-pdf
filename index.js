@@ -3,44 +3,36 @@ const express = require('express');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const cors = require('cors');
+const aws = require('aws-sdk');
 const File = require('./models/File');
-const { uploadFile, findFile } = require('./controllers/fileController');
-const { getAllFiles } = require('./controllers/fileController');
+const { uploadFile, findFile, getAllFiles } = require('./controllers/fileController');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Conexão com MongoDB
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Conectado ao MongoDB'))
-  .catch(err => console.error('Erro na conexão MongoDB:', err));
-
-// Configuração do Multer
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname);
-  }
+// Configurar AWS S3
+const s3 = new aws.S3({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: 'us-east-1' // Altere para sua região
 });
 
-const fileFilter = (req, file, cb) => {
-  if (file.mimetype === 'application/pdf') {
-    cb(null, true);
-  } else {
-    cb(new Error('Apenas arquivos PDF são permitidos'), false);
-  }
-};
-
+// Configuração do Multer para S3
 const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new Error('Apenas arquivos PDF são permitidos'), false);
+    }
+  },
   limits: {
-    files: 50 // Máximo de 50 arquivos
+    files: 50
   }
 });
+
 
 // Rotas
 app.post('/upload', upload.array('files'), uploadFile);
